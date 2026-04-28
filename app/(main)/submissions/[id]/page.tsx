@@ -58,14 +58,15 @@ export default async function SubmissionDetailPage({
           {submission.media_urls?.length ? (
             <div className="media-grid">
               {submission.media_urls.map((url) => (
-                <Image
-                  src={url}
-                  alt="Submitted media"
-                  key={url}
-                  width={640}
-                  height={480}
-                  unoptimized
-                />
+                <div className="media-frame" key={url}>
+                  <Image
+                    src={url}
+                    alt="Submitted media"
+                    width={1080}
+                    height={1920}
+                    unoptimized
+                  />
+                </div>
               ))}
             </div>
           ) : (
