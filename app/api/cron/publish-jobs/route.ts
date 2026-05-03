@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { mapSubmission } from "@/lib/map-submission";
-import { publishSubmissionToInstagram } from "@/lib/instagram";
+import { InstagramApiError, publishSubmissionToInstagram } from "@/lib/instagram";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import type { InstagramConnection, PublishJob } from "@/lib/types";
 
@@ -107,6 +107,10 @@ async function processJob(
     return { id: job.id, status: "succeeded" };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Instagram publish failed.";
+    const details =
+      error instanceof InstagramApiError && error.response
+        ? { error: message, graph_response: error.response }
+        : { error: message };
 
     await supabase
       .from("publish_jobs")
@@ -123,10 +127,10 @@ async function processJob(
       submission_id: job.submission_id,
       actor_label: "instagram",
       event_type: "publish_failed",
-      details: { error: message }
+      details
     });
 
-    return { id: job.id, status: "failed", error: message };
+    return { id: job.id, status: "failed", ...details };
   }
 }
 

@@ -163,11 +163,26 @@ function mediaEndpoint(instagramUserId: string) {
 
 async function graphFetch(url: string, init?: RequestInit): Promise<GraphResponse> {
   const res = await fetch(url, init);
-  const data = (await res.json()) as GraphResponse;
+  const data = (await res.json().catch(() => ({ error: "Non-JSON Graph API response" }))) as GraphResponse;
 
   if (!res.ok || data.error) {
-    throw new InstagramApiError("Instagram Graph API request failed.", data);
+    const graphMessage = extractGraphErrorMessage(data);
+    throw new InstagramApiError(graphMessage, data);
   }
 
   return data;
+}
+
+function extractGraphErrorMessage(data: GraphResponse) {
+  const error = data.error;
+  if (error && typeof error === "object" && !Array.isArray(error)) {
+    const graphError = error as Record<string, unknown>;
+    const message = typeof graphError.message === "string" ? graphError.message : null;
+    const code = typeof graphError.code === "number" ? `code ${graphError.code}` : null;
+    const subcode =
+      typeof graphError.error_subcode === "number" ? `subcode ${graphError.error_subcode}` : null;
+    return ["Instagram Graph API request failed", code, subcode, message].filter(Boolean).join(": ");
+  }
+
+  return `Instagram Graph API request failed: ${JSON.stringify(data)}`;
 }
