@@ -10,6 +10,17 @@ export type SubmissionStatus =
 
 export type PublishJobStatus = "queued" | "running" | "succeeded" | "failed";
 
+export type MediaFrameMode = "contain" | "cover";
+
+export type MediaFrameSettings = {
+  mode: MediaFrameMode;
+  zoom: number;
+  x: number;
+  y: number;
+};
+
+export type MediaFraming = Record<string, MediaFrameSettings>;
+
 export type Submission = {
   id: string;
   organisation_id: string;
@@ -20,6 +31,7 @@ export type Submission = {
   status: SubmissionStatus;
   media_urls: string[] | null;
   media_paths: string[] | null;
+  media_framing: MediaFraming | null;
   draft_caption: string | null;
   final_caption: string | null;
   ai_model: string | null;

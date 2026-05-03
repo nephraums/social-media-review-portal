@@ -1,8 +1,27 @@
-import type { Submission } from "@/lib/types";
+import type { MediaFraming, Submission } from "@/lib/types";
 
 export function parseStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === "string" && item.length > 0);
+}
+
+export function parseMediaFraming(value: unknown): MediaFraming | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+
+  const entries = Object.entries(value as Record<string, unknown>)
+    .map(([url, settings]) => {
+      if (!settings || typeof settings !== "object" || Array.isArray(settings)) return null;
+      const data = settings as Record<string, unknown>;
+      const mode = data.mode === "cover" ? "cover" : "contain";
+      const zoom = clampNumber(data.zoom, 1, 2.5, 1);
+      const x = clampNumber(data.x, -40, 40, 0);
+      const y = clampNumber(data.y, -40, 40, 0);
+
+      return [url, { mode, zoom, x, y }] as const;
+    })
+    .filter((entry): entry is readonly [string, MediaFraming[string]] => Boolean(entry));
+
+  return entries.length > 0 ? Object.fromEntries(entries) : null;
 }
 
 export function mapSubmission(row: Record<string, unknown>): Submission {
@@ -16,6 +35,7 @@ export function mapSubmission(row: Record<string, unknown>): Submission {
     status: row.status as Submission["status"],
     media_urls: parseStringArray(row.media_urls),
     media_paths: parseStringArray(row.media_paths),
+    media_framing: parseMediaFraming(row.media_framing),
     draft_caption: (row.draft_caption as string | null) ?? null,
     final_caption: (row.final_caption as string | null) ?? null,
     ai_model: (row.ai_model as string | null) ?? null,
@@ -28,4 +48,9 @@ export function mapSubmission(row: Record<string, unknown>): Submission {
     created_at: String(row.created_at),
     updated_at: String(row.updated_at)
   };
+}
+
+function clampNumber(value: unknown, min: number, max: number, fallback: number) {
+  const number = typeof value === "number" && Number.isFinite(value) ? value : fallback;
+  return Math.min(max, Math.max(min, number));
 }

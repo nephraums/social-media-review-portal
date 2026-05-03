@@ -34,8 +34,9 @@ export async function exchangeCodeForAccessToken(code: string) {
 export async function publishSubmissionToInstagram(opts: {
   submission: Submission;
   connection: InstagramConnection;
+  mediaUrls?: string[];
 }) {
-  const images = opts.submission.media_urls ?? [];
+  const images = opts.mediaUrls ?? opts.submission.media_urls ?? [];
   const caption = opts.submission.final_caption || opts.submission.draft_caption || opts.submission.brief;
 
   if (images.length === 0) {

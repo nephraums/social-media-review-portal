@@ -90,6 +90,7 @@ create table if not exists public.submissions (
   status public.submission_status not null default 'received',
   media_urls jsonb,
   media_paths jsonb,
+  media_framing jsonb,
   draft_caption text,
   final_caption text,
   ai_model text,

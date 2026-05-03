@@ -16,6 +16,7 @@
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "sharp": "^0.34.5",
     "twilio": "latest",
     "zod": "latest"
   },

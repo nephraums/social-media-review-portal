@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
   const results = [];
   for (const job of (jobs ?? []) as PublishJob[]) {
-    results.push(await processJob(supabase, job));
+    results.push(await processJob(supabase, job, new URL(request.url).origin));
   }
 
   return NextResponse.json({ processed: results.length, results });
@@ -39,7 +39,11 @@ export async function GET(request: Request) {
   return POST(request);
 }
 
-async function processJob(supabase: ReturnType<typeof createServiceRoleClient>, job: PublishJob) {
+async function processJob(
+  supabase: ReturnType<typeof createServiceRoleClient>,
+  job: PublishJob,
+  publicOrigin: string
+) {
   await supabase
     .from("publish_jobs")
     .update({
@@ -65,9 +69,11 @@ async function processJob(supabase: ReturnType<typeof createServiceRoleClient>, 
     if (!connection) throw new Error("Instagram connection not found.");
 
     const submission = mapSubmission(submissionRow as Record<string, unknown>);
+    const mediaUrls = buildPublishMediaUrls(submission, publicOrigin);
     const published = await publishSubmissionToInstagram({
       submission,
-      connection: connection as InstagramConnection
+      connection: connection as InstagramConnection,
+      mediaUrls
     });
 
     await supabase
@@ -122,4 +128,13 @@ async function processJob(supabase: ReturnType<typeof createServiceRoleClient>, 
 
     return { id: job.id, status: "failed", error: message };
   }
+}
+
+function buildPublishMediaUrls(submission: ReturnType<typeof mapSubmission>, publicOrigin: string) {
+  const originals = submission.media_urls ?? [];
+  if (!submission.media_framing || originals.length === 0) return originals;
+
+  return originals.map((_url, index) => {
+    return `${publicOrigin}/api/media/framed/${submission.id}/${index}`;
+  });
 }

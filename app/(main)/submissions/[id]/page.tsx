@@ -56,7 +56,11 @@ export default async function SubmissionDetailPage({
 
           <h2>Photos</h2>
           {submission.media_urls?.length ? (
-            <PhotoFramingReview mediaUrls={submission.media_urls} />
+            <PhotoFramingReview
+              submissionId={submission.id}
+              mediaUrls={submission.media_urls}
+              initialFraming={submission.media_framing}
+            />
           ) : (
             <p className="muted">No media URLs stored for this submission.</p>
           )}
