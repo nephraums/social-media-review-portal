@@ -5,13 +5,16 @@ import { useMemo, useState } from "react";
 import {
   approveSubmission,
   regenerateDraft,
-  rejectSubmission,
   saveCaption
 } from "@/app/actions/submissions";
 import type { MediaFraming, Submission } from "@/lib/types";
 import { PhotoFramingReview } from "./photo-framing-review";
 
 type TabKey = "submitted" | "photos" | "caption" | "publish";
+type MediaItem = {
+  url: string;
+  path: string | null;
+};
 
 const tabs: { key: TabKey; label: string }[] = [
   { key: "submitted", label: "Step 1 - Review submission" },
@@ -23,13 +26,25 @@ const tabs: { key: TabKey; label: string }[] = [
 export function SubmissionReviewTabs({
   submission,
   mediaUrls,
+  mediaPaths,
   initialFraming
 }: {
   submission: Submission;
   mediaUrls: string[];
+  mediaPaths: string[];
   initialFraming: MediaFraming | null;
 }) {
+  const initialMediaItems = useMemo<MediaItem[]>(
+    () =>
+      mediaUrls.map((url, index) => ({
+        url,
+        path: mediaPaths[index] ?? null
+      })),
+    [mediaPaths, mediaUrls]
+  );
   const [activeTab, setActiveTab] = useState<TabKey>("submitted");
+  const [mediaItems, setMediaItems] = useState(initialMediaItems);
+  const [hasSavedFraming, setHasSavedFraming] = useState(Boolean(initialFraming));
   const [userCaption, setUserCaption] = useState(submission.brief);
   const [finalCaption, setFinalCaption] = useState(
     submission.final_caption ?? submission.draft_caption ?? submission.brief
@@ -37,9 +52,9 @@ export function SubmissionReviewTabs({
   const aiCaption = submission.draft_caption ?? "";
   const finalPreview = finalCaption.trim() || aiCaption.trim() || userCaption.trim();
   const finalMediaUrls = useMemo(() => {
-    if (!initialFraming) return mediaUrls;
-    return mediaUrls.map((_, index) => `/api/media/framed/${submission.id}/${index}`);
-  }, [initialFraming, mediaUrls, submission.id]);
+    if (!hasSavedFraming) return mediaItems.map((item) => item.url);
+    return mediaItems.map((_, index) => `/api/media/framed/${submission.id}/${index}`);
+  }, [hasSavedFraming, mediaItems, submission.id]);
 
   return (
     <div className="review-layout">
@@ -75,12 +90,12 @@ export function SubmissionReviewTabs({
               <dd>{submission.brief}</dd>
             </div>
           </dl>
-          {mediaUrls.length > 0 ? (
+          {mediaItems.length > 0 ? (
             <div className="media-grid compact">
-              {mediaUrls.map((url, index) => (
-                <div className="media-frame" key={url}>
+              {mediaItems.map((item, index) => (
+                <div className="media-frame" key={item.url}>
                   <Image
-                    src={url}
+                    src={item.url}
                     alt={`Original submitted media ${index + 1}`}
                     fill
                     sizes="(max-width: 820px) 100vw, 360px"
@@ -102,11 +117,13 @@ export function SubmissionReviewTabs({
           <p className="muted">
             Adjust the 9:16 crop so the saved version is what Instagram publishing uses.
           </p>
-          {mediaUrls.length > 0 ? (
+          {mediaItems.length > 0 ? (
             <PhotoFramingReview
               submissionId={submission.id}
-              mediaUrls={mediaUrls}
+              mediaItems={mediaItems}
               initialFraming={initialFraming}
+              onMediaItemsChange={setMediaItems}
+              onFramingSaved={() => setHasSavedFraming(true)}
             />
           ) : (
             <p className="muted">No photos available to crop.</p>
@@ -219,17 +236,6 @@ export function SubmissionReviewTabs({
           </form>
         </section>
       ) : null}
-
-      <section className="card review-panel">
-        <h2>Reject submission</h2>
-        <form action={rejectSubmission} className="grid">
-          <input type="hidden" name="id" value={submission.id} />
-          <textarea name="reason" placeholder="Reason sent back over WhatsApp" required />
-          <button type="submit" className="danger">
-            Reject and reply
-          </button>
-        </form>
-      </section>
     </div>
   );
 }

@@ -35,6 +35,7 @@ export default async function SubmissionDetailPage({
   const events = (eventRows ?? []) as SubmissionEvent[];
   const jobs = (jobRows ?? []) as PublishJob[];
   const mediaUrls = submission.media_urls ?? [];
+  const mediaPaths = submission.media_paths ?? [];
 
   return (
     <main className="page">
@@ -59,6 +60,7 @@ export default async function SubmissionDetailPage({
       <SubmissionReviewTabs
         submission={submission}
         mediaUrls={mediaUrls}
+        mediaPaths={mediaPaths}
         initialFraming={submission.media_framing}
       />
 

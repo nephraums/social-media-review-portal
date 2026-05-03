@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { draftSubmissionCaption } from "@/lib/drafting";
+import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { sendWhatsAppMessage } from "@/lib/twilio-messages";
 
 const idSchema = z.string().uuid();
 
@@ -55,49 +55,40 @@ export async function approveSubmission(formData: FormData) {
   revalidateSubmission(id);
 }
 
-export async function rejectSubmission(formData: FormData) {
+export async function deleteSubmission(formData: FormData) {
   const id = idSchema.parse(String(formData.get("id")));
-  const reason = z.string().min(1).parse(String(formData.get("reason") ?? "").trim());
   const { supabase, user } = await getAuthedContext();
 
-  const { data: existing, error: readError } = await supabase
+  const { data: submission, error: readError } = await supabase
     .from("submissions")
-    .select("id, organisation_id, whatsapp_from")
+    .select("id, organisation_id, media_paths")
     .eq("id", id)
     .single();
 
-  if (readError || !existing) throw new Error(readError?.message ?? "Submission not found.");
+  if (readError || !submission) throw new Error(readError?.message ?? "Submission not found.");
 
-  const { error } = await supabase
-    .from("submissions")
-    .update({
-      status: "rejected",
-      rejection_reason: reason,
-      reviewed_by: user.id,
-      reviewed_at: new Date().toISOString()
-    })
-    .eq("id", id);
+  const admin = createServiceRoleClient();
+  const paths = Array.isArray(submission.media_paths)
+    ? submission.media_paths.filter((path): path is string => typeof path === "string")
+    : [];
 
-  if (error) throw new Error(error.message);
-
-  let reply: unknown = null;
-  if (existing.whatsapp_from) {
-    reply = await sendWhatsAppMessage({
-      to: existing.whatsapp_from,
-      body: `Thanks for your submission. It was not approved this time.\n\nReason: ${reason}`
-    });
+  if (paths.length > 0) {
+    await admin.storage.from("organisation-media").remove(paths);
   }
 
-  await supabase.from("submission_events").insert({
-    organisation_id: existing.organisation_id,
+  await admin.from("submission_events").insert({
+    organisation_id: submission.organisation_id,
     submission_id: id,
     actor_user_id: user.id,
     actor_label: "reviewer",
-    event_type: "rejected",
-    details: { reason, reply }
+    event_type: "deleted",
+    details: { media_count: paths.length }
   });
 
-  revalidateSubmission(id);
+  const { error } = await admin.from("submissions").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/");
 }
 
 export async function regenerateDraft(formData: FormData) {

@@ -1,15 +1,24 @@
 import Link from "next/link";
+import { deleteSubmission } from "@/app/actions/submissions";
 import { getPublicEnv } from "@/lib/env";
 import { mapSubmission } from "@/lib/map-submission";
 import { createClient } from "@/lib/supabase/server";
 import type { Submission, SubmissionStatus } from "@/lib/types";
 
-const statuses: SubmissionStatus[] = [
-  "pending_review",
-  "approved",
-  "rejected",
-  "published",
-  "failed"
+type DashboardFilter = {
+  key: "pending_review" | "approved_published" | "failed";
+  label: string;
+  statuses: SubmissionStatus[];
+};
+
+const filters: DashboardFilter[] = [
+  { key: "pending_review", label: "Pending Review", statuses: ["pending_review"] },
+  {
+    key: "approved_published",
+    label: "Approved / Published",
+    statuses: ["approved", "publishing", "published"]
+  },
+  { key: "failed", label: "Failed", statuses: ["failed"] }
 ];
 
 export const dynamic = "force-dynamic";
@@ -17,10 +26,11 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage({
   searchParams
 }: {
-  searchParams?: Promise<{ status?: SubmissionStatus }>;
+  searchParams?: Promise<{ status?: DashboardFilter["key"] }>;
 }) {
   const params = await searchParams;
-  const selectedStatus = params?.status && statuses.includes(params.status) ? params.status : "pending_review";
+  const selectedFilter =
+    filters.find((filter) => filter.key === params?.status) ?? filters[0];
   const env = getPublicEnv();
   const supabase = await createClient();
 
@@ -28,7 +38,7 @@ export default async function DashboardPage({
     .from("submissions")
     .select("*")
     .eq("organisation_id", env.NEXT_PUBLIC_DEFAULT_ORGANISATION_ID)
-    .eq("status", selectedStatus)
+    .in("status", selectedFilter.statuses)
     .order("created_at", { ascending: false });
 
   const submissions = (data ?? []).map((row) => mapSubmission(row as Record<string, unknown>));
@@ -45,13 +55,13 @@ export default async function DashboardPage({
       </div>
 
       <div className="actions" style={{ margin: "1rem 0" }}>
-        {statuses.map((status) => (
+        {filters.map((filter) => (
           <Link
-            className={`button ${status === selectedStatus ? "" : "secondary"}`}
-            href={`/?status=${status}`}
-            key={status}
+            className={`button ${filter.key === selectedFilter.key ? "" : "secondary"}`}
+            href={`/?status=${filter.key}`}
+            key={filter.key}
           >
-            {status.replace("_", " ")}
+            {filter.label}
           </Link>
         ))}
       </div>
@@ -82,10 +92,20 @@ export default async function DashboardPage({
                         <td>{submission.brief}</td>
                         <td>{submission.whatsapp_from ?? "Unknown"}</td>
                         <td>
-                          <span className="pill">{submission.status}</span>
+                          <span className="pill">{formatStatus(submission.status)}</span>
                         </td>
                         <td>
-                          <Link href={`/submissions/${submission.id}`}>Review</Link>
+                          <div className="actions">
+                            <Link href={`/submissions/${submission.id}`}>Review</Link>
+                            {selectedFilter.key === "pending_review" ? (
+                              <form action={deleteSubmission}>
+                                <input type="hidden" name="id" value={submission.id} />
+                                <button className="danger compact-button" type="submit">
+                                  Delete
+                                </button>
+                              </form>
+                            ) : null}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -137,4 +157,11 @@ function startOfWeek(date: Date) {
   start.setDate(start.getDate() + diff);
   start.setHours(0, 0, 0, 0);
   return start;
+}
+
+function formatStatus(status: SubmissionStatus) {
+  return status
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }
