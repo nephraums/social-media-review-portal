@@ -159,19 +159,46 @@ textarea {
   justify-content: start;
 }
 
+.media-review-card {
+  display: grid;
+  gap: 0.85rem;
+}
+
 .media-frame {
   aspect-ratio: 9 / 16;
   background: #111827;
   border-radius: 1rem;
   overflow: hidden;
+  position: relative;
   width: 100%;
 }
 
 .media-frame img {
-  border-radius: 0.8rem;
-  height: 100%;
-  object-fit: cover;
-  width: 100%;
+  transform-origin: center;
+}
+
+.media-controls {
+  background: #f9fafb;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.85rem;
+}
+
+.media-controls label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.media-controls input[type="range"] {
+  padding: 0;
+}
+
+.segmented-control {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .actions {

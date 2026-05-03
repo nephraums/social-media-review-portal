@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -10,6 +9,7 @@ import {
 import { mapSubmission } from "@/lib/map-submission";
 import { createClient } from "@/lib/supabase/server";
 import type { PublishJob, SubmissionEvent } from "@/lib/types";
+import { PhotoFramingReview } from "./photo-framing-review";
 
 export const dynamic = "force-dynamic";
 
@@ -56,19 +56,7 @@ export default async function SubmissionDetailPage({
 
           <h2>Photos</h2>
           {submission.media_urls?.length ? (
-            <div className="media-grid">
-              {submission.media_urls.map((url) => (
-                <div className="media-frame" key={url}>
-                  <Image
-                    src={url}
-                    alt="Submitted media"
-                    width={1080}
-                    height={1920}
-                    unoptimized
-                  />
-                </div>
-              ))}
-            </div>
+            <PhotoFramingReview mediaUrls={submission.media_urls} />
           ) : (
             <p className="muted">No media URLs stored for this submission.</p>
           )}
