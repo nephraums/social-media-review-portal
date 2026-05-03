@@ -1,15 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  approveSubmission,
-  regenerateDraft,
-  rejectSubmission,
-  saveCaption
-} from "@/app/actions/submissions";
 import { mapSubmission } from "@/lib/map-submission";
 import { createClient } from "@/lib/supabase/server";
 import type { PublishJob, SubmissionEvent } from "@/lib/types";
-import { PhotoFramingReview } from "./photo-framing-review";
+import { SubmissionReviewTabs } from "./submission-review-tabs";
 
 export const dynamic = "force-dynamic";
 
@@ -40,87 +34,33 @@ export default async function SubmissionDetailPage({
 
   const events = (eventRows ?? []) as SubmissionEvent[];
   const jobs = (jobRows ?? []) as PublishJob[];
-  const caption = submission.final_caption ?? submission.draft_caption ?? "";
+  const mediaUrls = submission.media_urls ?? [];
 
   return (
     <main className="page">
       <Link href="/">&larr; Back to dashboard</Link>
-      <div className="grid two" style={{ marginTop: "1rem" }}>
-        <section className="card">
-          <p className="pill">{submission.status}</p>
-          <h1>Review submission</h1>
-          <p className="muted">
-            Submitted {new Date(submission.created_at).toLocaleString()} by{" "}
-            {submission.whatsapp_from ?? "unknown submitter"}.
+      <header className="review-header">
+        <p className="pill">{submission.status}</p>
+        <h1>Review submission</h1>
+        <p className="muted">
+          Submitted {new Date(submission.created_at).toLocaleString()} by{" "}
+          {submission.whatsapp_from ?? "unknown submitter"}.
+        </p>
+        {submission.rejection_reason ? (
+          <p className="notice">Rejected: {submission.rejection_reason}</p>
+        ) : null}
+        {submission.instagram_permalink ? (
+          <p>
+            Published: <a href={submission.instagram_permalink}>{submission.instagram_permalink}</a>
           </p>
+        ) : null}
+      </header>
 
-          <h2>Photos</h2>
-          {submission.media_urls?.length ? (
-            <PhotoFramingReview
-              submissionId={submission.id}
-              mediaUrls={submission.media_urls}
-              initialFraming={submission.media_framing}
-            />
-          ) : (
-            <p className="muted">No media URLs stored for this submission.</p>
-          )}
-
-          <h2>Brief</h2>
-          <p>{submission.brief}</p>
-
-          {submission.ai_error ? (
-            <p className="notice">AI drafting error: {submission.ai_error}</p>
-          ) : null}
-
-          {submission.rejection_reason ? (
-            <p className="notice">Rejected: {submission.rejection_reason}</p>
-          ) : null}
-
-          {submission.instagram_permalink ? (
-            <p>
-              Published: <a href={submission.instagram_permalink}>{submission.instagram_permalink}</a>
-            </p>
-          ) : null}
-        </section>
-
-        <aside className="grid">
-          <section className="card">
-            <h2>Caption</h2>
-            <form action={saveCaption} className="grid">
-              <input type="hidden" name="id" value={submission.id} />
-              <textarea name="final_caption" defaultValue={caption} required />
-              <button type="submit">Save caption</button>
-            </form>
-            <form action={approveSubmission} className="grid" style={{ marginTop: "1rem" }}>
-              <input type="hidden" name="id" value={submission.id} />
-              <textarea name="final_caption" defaultValue={caption} required />
-              <button type="submit">Approve and queue publish</button>
-            </form>
-          </section>
-
-          <section className="card">
-            <h2>Regenerate draft</h2>
-            <form action={regenerateDraft} className="grid">
-              <input type="hidden" name="id" value={submission.id} />
-              <textarea name="reviewer_notes" placeholder="Optional notes for Gemini" />
-              <button type="submit" className="secondary">
-                Regenerate with Gemini
-              </button>
-            </form>
-          </section>
-
-          <section className="card">
-            <h2>Reject</h2>
-            <form action={rejectSubmission} className="grid">
-              <input type="hidden" name="id" value={submission.id} />
-              <textarea name="reason" placeholder="Reason sent back over WhatsApp" required />
-              <button type="submit" className="danger">
-                Reject and reply
-              </button>
-            </form>
-          </section>
-        </aside>
-      </div>
+      <SubmissionReviewTabs
+        submission={submission}
+        mediaUrls={mediaUrls}
+        initialFraming={submission.media_framing}
+      />
 
       <div className="grid two" style={{ marginTop: "1rem" }}>
         <section className="card">

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getPublicEnv } from "@/lib/env";
 import { mapSubmission } from "@/lib/map-submission";
 import { createClient } from "@/lib/supabase/server";
-import type { SubmissionStatus } from "@/lib/types";
+import type { Submission, SubmissionStatus } from "@/lib/types";
 
 const statuses: SubmissionStatus[] = [
   "pending_review",
@@ -32,6 +32,7 @@ export default async function DashboardPage({
     .order("created_at", { ascending: false });
 
   const submissions = (data ?? []).map((row) => mapSubmission(row as Record<string, unknown>));
+  const groupedSubmissions = groupSubmissionsByWeek(submissions);
 
   return (
     <main className="page">
@@ -60,34 +61,80 @@ export default async function DashboardPage({
         {submissions.length === 0 ? (
           <p className="muted">No submissions found for this status.</p>
         ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Created</th>
-                <th>Brief</th>
-                <th>Submitter</th>
-                <th>Status</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {submissions.map((submission) => (
-                <tr key={submission.id}>
-                  <td>{new Date(submission.created_at).toLocaleString()}</td>
-                  <td>{submission.brief}</td>
-                  <td>{submission.whatsapp_from ?? "Unknown"}</td>
-                  <td>
-                    <span className="pill">{submission.status}</span>
-                  </td>
-                  <td>
-                    <Link href={`/submissions/${submission.id}`}>Review</Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="week-groups">
+            {groupedSubmissions.map((group) => (
+              <section className="week-group" key={group.label}>
+                <h2>{group.label}</h2>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Created</th>
+                      <th>Brief</th>
+                      <th>Submitter</th>
+                      <th>Status</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.submissions.map((submission) => (
+                      <tr key={submission.id}>
+                        <td>{new Date(submission.created_at).toLocaleString()}</td>
+                        <td>{submission.brief}</td>
+                        <td>{submission.whatsapp_from ?? "Unknown"}</td>
+                        <td>
+                          <span className="pill">{submission.status}</span>
+                        </td>
+                        <td>
+                          <Link href={`/submissions/${submission.id}`}>Review</Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </section>
+            ))}
+          </div>
         )}
       </section>
     </main>
   );
+}
+
+function groupSubmissionsByWeek(submissions: Submission[]) {
+  const groups = new Map<string, Submission[]>();
+
+  for (const submission of submissions) {
+    const label = getWeekLabel(new Date(submission.created_at));
+    groups.set(label, [...(groups.get(label) ?? []), submission]);
+  }
+
+  return Array.from(groups.entries()).map(([label, groupSubmissions]) => ({
+    label,
+    submissions: groupSubmissions
+  }));
+}
+
+function getWeekLabel(date: Date) {
+  const monday = startOfWeek(date);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+
+  return `Week of ${monday.toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  })} - ${sunday.toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  })}`;
+}
+
+function startOfWeek(date: Date) {
+  const start = new Date(date);
+  const day = start.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  start.setDate(start.getDate() + diff);
+  start.setHours(0, 0, 0, 0);
+  return start;
 }

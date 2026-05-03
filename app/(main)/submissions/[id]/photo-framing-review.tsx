@@ -24,11 +24,13 @@ const defaultSettings: FrameSettings = {
 export function PhotoFramingReview({
   submissionId,
   mediaUrls,
-  initialFraming
+  initialFraming,
+  showSaveButton = true
 }: {
   submissionId: string;
   mediaUrls: string[];
   initialFraming: MediaFraming | null;
+  showSaveButton?: boolean;
 }) {
   const [settingsByUrl, setSettingsByUrl] = useState<Record<string, FrameSettings>>(
     () => initialFraming ?? {}
@@ -152,12 +154,14 @@ export function PhotoFramingReview({
         })}
       </div>
 
-      <div className="actions">
-        <button type="button" onClick={saveFraming} disabled={isPending}>
-          {isPending ? "Saving framing..." : "Save crop / zoom for Instagram"}
-        </button>
-        {message ? <span className="muted">{message}</span> : null}
-      </div>
+      {showSaveButton ? (
+        <div className="actions">
+          <button type="button" onClick={saveFraming} disabled={isPending}>
+            {isPending ? "Saving framing..." : "Save crop / zoom for Instagram"}
+          </button>
+          {message ? <span className="muted">{message}</span> : null}
+        </div>
+      ) : null}
     </div>
   );
 }
