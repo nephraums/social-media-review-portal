@@ -3,8 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { draftSubmissionCaption } from "@/lib/drafting";
+import { getSiteUrl } from "@/lib/env";
+import { processPublishJob } from "@/lib/publish-jobs";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import type { PublishJob } from "@/lib/types";
 
 const idSchema = z.string().uuid();
 
@@ -43,15 +46,28 @@ export async function approveSubmission(formData: FormData) {
 
   if (error || !submission) throw new Error(error?.message ?? "Submission not found.");
 
-  await supabase.from("publish_jobs").insert({
-    organisation_id: submission.organisation_id,
-    submission_id: submission.id,
-    requested_by: user.id,
-    status: "queued",
-    platform: "instagram"
-  });
+  const { data: publishJob, error: jobError } = await supabase
+    .from("publish_jobs")
+    .insert({
+      organisation_id: submission.organisation_id,
+      submission_id: submission.id,
+      requested_by: user.id,
+      status: "queued",
+      platform: "instagram"
+    })
+    .select("*")
+    .single();
+
+  if (jobError || !publishJob) {
+    throw new Error(jobError?.message ?? "Could not create publish job.");
+  }
 
   await recordEvent(supabase, id, user.id, "approved", { final_caption: finalCaption });
+  await processPublishJob(
+    createServiceRoleClient(),
+    publishJob as PublishJob,
+    getSiteUrl()
+  );
   revalidateSubmission(id);
 }
 
