@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { draftSubmissionCaption } from "@/lib/drafting";
 import { getSiteUrl } from "@/lib/env";
@@ -66,7 +67,7 @@ export async function approveSubmission(formData: FormData) {
   await processPublishJob(
     createServiceRoleClient(),
     publishJob as PublishJob,
-    getSiteUrl()
+    await getRequestOrigin()
   );
   revalidateSubmission(id);
 }
@@ -163,4 +164,16 @@ async function recordEvent(
 function revalidateSubmission(id: string) {
   revalidatePath("/");
   revalidatePath(`/submissions/${id}`);
+}
+
+async function getRequestOrigin() {
+  const headerStore = await headers();
+  const host = headerStore.get("x-forwarded-host") ?? headerStore.get("host");
+  const proto = headerStore.get("x-forwarded-proto") ?? "https";
+
+  if (host) {
+    return `${proto}://${host}`;
+  }
+
+  return getSiteUrl();
 }
