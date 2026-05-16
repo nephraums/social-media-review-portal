@@ -64,7 +64,7 @@ export default async function SubmissionDetailPage({
         initialFraming={submission.media_framing}
       />
 
-      <div className="grid two" style={{ marginTop: "1rem" }}>
+      <div className="activity-grid">
         <section className="card">
           <h2>Publish jobs</h2>
           {jobs.length === 0 ? (
@@ -86,17 +86,17 @@ export default async function SubmissionDetailPage({
           )}
         </section>
 
-        <section className="card">
+        <section className="card events-card">
           <h2>Events</h2>
           {events.length === 0 ? (
             <p className="muted">No events recorded yet.</p>
           ) : (
             <div className="grid">
               {events.map((event) => (
-                <div key={event.id}>
+                <div className="event-item" key={event.id}>
                   <strong>{event.event_type}</strong>
                   <div className="muted">{new Date(event.created_at).toLocaleString()}</div>
-                  {event.details ? <pre>{JSON.stringify(event.details, null, 2)}</pre> : null}
+                  {event.details ? <pre className="event-details">{JSON.stringify(event.details, null, 2)}</pre> : null}
                 </div>
               ))}
             </div>

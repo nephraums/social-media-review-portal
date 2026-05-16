@@ -96,7 +96,9 @@ export default async function DashboardPage({
                         </td>
                         <td>
                           <div className="actions">
-                            <Link href={`/submissions/${submission.id}`}>Review</Link>
+                            <Link className="button review-button compact-button" href={`/submissions/${submission.id}`}>
+                              Review
+                            </Link>
                             {selectedFilter.key === "pending_review" ? (
                               <form action={deleteSubmission}>
                                 <input type="hidden" name="id" value={submission.id} />
