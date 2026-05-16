@@ -53,7 +53,7 @@ export function SubmissionReviewTabs({
   const finalPreview = finalCaption.trim() || aiCaption.trim() || userCaption.trim();
   const finalMediaUrls = useMemo(() => {
     if (!hasSavedFraming) return mediaItems.map((item) => item.url);
-    return mediaItems.map((_, index) => `/api/media/framed/${submission.id}/${index}`);
+    return mediaItems.map((_, index) => `/api/media/framed/${submission.id}/${index}.jpg`);
   }, [hasSavedFraming, mediaItems, submission.id]);
 
   return (

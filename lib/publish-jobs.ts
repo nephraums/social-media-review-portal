@@ -132,6 +132,6 @@ function buildPublishMediaUrls(submission: ReturnType<typeof mapSubmission>, pub
 
   const origin = publicOrigin.replace(/\/$/, "");
   return originals.map((_url, index) => {
-    return `${origin}/api/media/framed/${submission.id}/${index}`;
+    return `${origin}/api/media/framed/${submission.id}/${index}.jpg`;
   });
 }
