@@ -20,43 +20,44 @@ export default async function StyleSettingsPage() {
   return (
     <main className="page">
       <p className="pill">Admin</p>
-      <h1>Brand Voice Settings</h1>
+      <h1>Caption Helper</h1>
       <p className="muted">
-        Set simple guidance Gemini should use when improving WhatsApp text into Instagram captions.
+        Give Gemini practical helpers for polishing parent-submitted WhatsApp text. These settings
+        guide style only; facts must still come from each submission.
       </p>
 
       <section className="card">
-        <h2>Caption guidance</h2>
+        <h2>Reusable caption helpers</h2>
         <form action={saveAiSettings} className="grid">
           <label>
-            Brand voice notes
+            Caption style and preferred emojis
             <textarea
               name="brand_voice_notes"
-              placeholder="Example: Warm, upbeat community sports club tone. Short captions. Australian spelling. 1-3 emojis."
+              placeholder="Warm, positive, community-focused. Keep captions short and friendly. Preferred emojis: 🔵 ⚪ 🏉 👏 🙌"
               defaultValue={aiSettings?.brand_voice_notes ?? ""}
             />
           </label>
           <label>
-            Default hashtags
+            Frequent hashtags
             <textarea
               name="default_hashtags"
-              placeholder="Example: #YourClub #CommunitySport"
+              placeholder="#YourClub #JuniorSport #CommunityFooty"
               defaultValue={aiSettings?.default_hashtags ?? ""}
             />
           </label>
           <label>
-            Banned phrases
+            Things to avoid
             <textarea
               name="banned_phrases"
-              placeholder="Words or phrases Gemini should avoid."
+              placeholder="Do not mention scores unless supplied. Do not invent player names. Do not mention opposition unless supplied."
               defaultValue={aiSettings?.banned_phrases ?? ""}
             />
           </label>
           <label>
-            Call-to-action notes
+            Default call-to-action guidance
             <textarea
               name="call_to_action_notes"
-              placeholder="Example: End with a light call to action when appropriate."
+              placeholder="Thank volunteers, families, and supporters when appropriate."
               defaultValue={aiSettings?.call_to_action_notes ?? ""}
             />
           </label>
@@ -73,7 +74,7 @@ export default async function StyleSettingsPage() {
             />
             Auto-improve caption after WhatsApp intake
           </label>
-          <button type="submit">Save brand voice settings</button>
+          <button type="submit">Save Caption Helper settings</button>
         </form>
       </section>
     </main>

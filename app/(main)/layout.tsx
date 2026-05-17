@@ -22,7 +22,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
           </div>
           <nav className="nav">
             <Link href="/">Submissions</Link>
-            <Link href="/settings/style">Learning Area</Link>
+            <Link href="/settings/style">Caption Helper</Link>
             <Link href="/settings/instagram">Instagram</Link>
             <form action={signOut}>
               <button className="secondary" type="submit">

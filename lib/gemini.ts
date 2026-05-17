@@ -47,7 +47,7 @@ function buildPrompt(opts: {
   aiSettings: AiSettings | null;
   reviewerNotes?: string;
 }) {
-  return `You improve short WhatsApp submission text into Instagram captions for an organisation.
+  return `You improve short parent-submitted WhatsApp text into Instagram captions for a sports club.
 
 Return JSON only with this shape:
 {
@@ -61,10 +61,14 @@ Rules:
 - Rewrite the submitted WhatsApp text into a short Instagram caption.
 - Use Australian spelling.
 - Use 1-3 emojis if appropriate.
-- Do not invent names, dates, scores, locations, sponsors, awards, events, or outcomes.
-- Only use facts present in the submitted WhatsApp text.
+- The submitted WhatsApp text is the ONLY source of event facts.
+- Caption Helper settings below are reusable style/helper guidance only. They are NOT facts about this week's post.
+- Do not treat any club names, opposition names, people, places, sponsors, events, or example wording in the settings as current-post facts.
+- Do not invent opposition names, player names, team names, dates, scores, locations, sponsors, awards, injuries, events, or outcomes.
+- If a fact is not explicitly present in the submitted WhatsApp text, leave it out.
 - Keep it suitable for Instagram and easy for a reviewer to edit.
-- If default hashtags are provided, include only the most relevant ones.
+- Use frequent hashtags and preferred emojis only when appropriate.
+- Keep the caption polished, friendly, and concise.
 
 Submitted WhatsApp text:
 ${opts.submission.brief}
@@ -72,15 +76,15 @@ ${opts.submission.brief}
 Reviewer notes or current caption:
 ${opts.reviewerNotes || "None"}
 
-Organisation voice notes:
+Caption style and preferred emojis (style guidance only, not event facts):
 ${opts.aiSettings?.brand_voice_notes || "None"}
 
-Default hashtags:
+Frequent hashtags (optional helper only):
 ${opts.aiSettings?.default_hashtags || "None"}
 
-Banned phrases:
+Things to avoid:
 ${opts.aiSettings?.banned_phrases || "None"}
 
-Call-to-action notes:
+Default call-to-action guidance:
 ${opts.aiSettings?.call_to_action_notes || "None"}`;
 }

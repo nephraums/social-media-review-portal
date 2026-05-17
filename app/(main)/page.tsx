@@ -46,13 +46,40 @@ export default async function DashboardPage({
 
   return (
     <main className="page">
-      <div className="actions" style={{ justifyContent: "space-between" }}>
+      <section className="hero-card">
         <div>
           <p className="pill">Dashboard</p>
-          <h1>Submissions</h1>
-          <p className="muted">Filter review work by status and open each submission for editing.</p>
+          <h1>Social Media Review Portal</h1>
+          <p>
+            This portal helps club volunteers turn WhatsApp photo submissions into polished Instagram
+            posts. Review photos, crop them for social, improve captions with AI, and publish approved
+            posts.
+          </p>
         </div>
-      </div>
+      </section>
+
+      <section className="action-card-grid" aria-label="Portal shortcuts">
+        <Link className="action-card" href="/?status=pending_review">
+          <span className="action-card-icon" aria-hidden="true">📥</span>
+          <strong>Review Submissions</strong>
+          <span>Open new WhatsApp posts waiting for review.</span>
+        </Link>
+        <Link className="action-card" href="/settings/style">
+          <span className="action-card-icon" aria-hidden="true">✨</span>
+          <strong>Caption Helper</strong>
+          <span>Set hashtags, emojis, and AI caption guidance.</span>
+        </Link>
+        <Link className="action-card" href="/settings/instagram">
+          <span className="action-card-icon" aria-hidden="true">📲</span>
+          <strong>Instagram Connection</strong>
+          <span>Manage the account used for publishing.</span>
+        </Link>
+        <Link className="action-card" href="/?status=approved_published">
+          <span className="action-card-icon" aria-hidden="true">✅</span>
+          <strong>Published Posts</strong>
+          <span>Review approved, publishing, and published work.</span>
+        </Link>
+      </section>
 
       <div className="actions" style={{ margin: "1rem 0" }}>
         {filters.map((filter) => (

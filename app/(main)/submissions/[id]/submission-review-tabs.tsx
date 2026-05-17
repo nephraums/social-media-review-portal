@@ -133,7 +133,8 @@ export function SubmissionReviewTabs({
         <section className="card review-panel">
           <h2>Step 3 - Review caption text</h2>
           <p className="muted">
-            Start with the original WhatsApp text, optionally improve it with AI, then edit the final caption.
+            AI will polish the WhatsApp text using Caption Helper settings. It will not add facts that
+            were not supplied.
           </p>
           <label>
             Original WhatsApp text (not editable)
@@ -154,7 +155,7 @@ export function SubmissionReviewTabs({
                 formAction={improveCaption}
                 className="secondary"
               >
-                Improve with AI
+                Improve caption with AI
               </button>
               <button formAction={saveCaption}>Save final caption</button>
             </div>
