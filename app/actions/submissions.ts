@@ -28,6 +28,21 @@ export async function saveCaption(formData: FormData) {
   revalidateSubmission(id);
 }
 
+export async function improveCaption(formData: FormData) {
+  const id = idSchema.parse(String(formData.get("id")));
+  const currentCaption = String(formData.get("final_caption") ?? "").trim();
+  const { supabase, user } = await getAuthedContext();
+
+  await draftSubmissionCaption({
+    supabase,
+    submissionId: id,
+    reviewerNotes: currentCaption,
+    actorUserId: user.id
+  });
+
+  revalidateSubmission(id);
+}
+
 export async function approveSubmission(formData: FormData) {
   const id = idSchema.parse(String(formData.get("id")));
   const finalCaption = z.string().min(1).parse(String(formData.get("final_caption") ?? "").trim());

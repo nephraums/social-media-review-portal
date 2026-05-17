@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { generateCaptionDraft } from "@/lib/gemini";
 import { mapSubmission } from "@/lib/map-submission";
-import type { AiSettings, StyleExample } from "@/lib/types";
+import type { AiSettings } from "@/lib/types";
 
 export async function draftSubmissionCaption(opts: {
   supabase: SupabaseClient;
@@ -26,24 +26,15 @@ export async function draftSubmissionCaption(opts: {
     .update({ status: "drafting", ai_error: null })
     .eq("id", opts.submissionId);
 
-  const [{ data: styleRows }, { data: aiSettingsRow }] = await Promise.all([
-    opts.supabase
-      .from("style_examples")
-      .select("*")
-      .eq("organisation_id", submission.organisation_id)
-      .order("created_at", { ascending: false })
-      .limit(12),
-    opts.supabase
-      .from("organisation_ai_settings")
-      .select("*")
-      .eq("organisation_id", submission.organisation_id)
-      .maybeSingle()
-  ]);
+  const { data: aiSettingsRow } = await opts.supabase
+    .from("organisation_ai_settings")
+    .select("*")
+    .eq("organisation_id", submission.organisation_id)
+    .maybeSingle();
 
   try {
     const result = await generateCaptionDraft({
       submission,
-      styleExamples: (styleRows ?? []) as StyleExample[],
       aiSettings: (aiSettingsRow as AiSettings | null) ?? null,
       reviewerNotes: opts.reviewerNotes
     });
@@ -52,6 +43,7 @@ export async function draftSubmissionCaption(opts: {
       .from("submissions")
       .update({
         draft_caption: result.response.caption,
+        final_caption: result.response.caption,
         ai_model: result.model,
         ai_error: null,
         status: "pending_review"
@@ -63,7 +55,7 @@ export async function draftSubmissionCaption(opts: {
       submission_id: submission.id,
       actor_user_id: opts.actorUserId ?? null,
       actor_label: opts.actorUserId ? "reviewer" : "system",
-      event_type: "draft_generated",
+      event_type: "caption_improved",
       details: {
         model: result.model,
         alt_text: result.response.alt_text,

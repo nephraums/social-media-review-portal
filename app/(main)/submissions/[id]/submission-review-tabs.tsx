@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import {
   approveSubmission,
-  regenerateDraft,
+  improveCaption,
   saveCaption
 } from "@/app/actions/submissions";
 import type { MediaFraming, Submission } from "@/lib/types";
@@ -45,12 +45,10 @@ export function SubmissionReviewTabs({
   const [activeTab, setActiveTab] = useState<TabKey>("submitted");
   const [mediaItems, setMediaItems] = useState(initialMediaItems);
   const [hasSavedFraming, setHasSavedFraming] = useState(Boolean(initialFraming));
-  const [userCaption, setUserCaption] = useState(submission.brief);
   const [finalCaption, setFinalCaption] = useState(
     submission.final_caption ?? submission.draft_caption ?? submission.brief
   );
-  const aiCaption = submission.draft_caption ?? "";
-  const finalPreview = finalCaption.trim() || aiCaption.trim() || userCaption.trim();
+  const finalPreview = finalCaption.trim() || submission.brief;
   const finalMediaUrls = useMemo(() => {
     if (!hasSavedFraming) return mediaItems.map((item) => item.url);
     return mediaItems.map((_, index) => `/api/media/framed/${submission.id}/${index}.jpg`);
@@ -134,48 +132,14 @@ export function SubmissionReviewTabs({
       {activeTab === "caption" ? (
         <section className="card review-panel">
           <h2>Step 3 - Review caption text</h2>
-          <div className="grid two">
-            <div className="grid">
-              <label>
-                Original WhatsApp text (not editable)
-                <textarea value={submission.brief} readOnly />
-              </label>
-              <label>
-                Edited user-generated text
-                <textarea
-                  value={userCaption}
-                  onChange={(event) => {
-                    setUserCaption(event.target.value);
-                    if (!aiCaption) {
-                      setFinalCaption(event.target.value);
-                    }
-                  }}
-                />
-              </label>
-            </div>
-            <div className="grid">
-              <form action={regenerateDraft} className="grid">
-                <input type="hidden" name="id" value={submission.id} />
-                <input type="hidden" name="reviewer_notes" value={userCaption} />
-                <label>
-                  AI enhanced text
-                  <textarea
-                    defaultValue={aiCaption}
-                    placeholder="Click the button below to generate AI enhanced text."
-                    readOnly
-                  />
-                </label>
-                <button type="submit" className="secondary">
-                  Generate / regenerate AI text
-                </button>
-              </form>
-              {submission.ai_error ? (
-                <p className="notice">AI drafting error: {submission.ai_error}</p>
-              ) : null}
-            </div>
-          </div>
-
-          <form action={saveCaption} className="grid" style={{ marginTop: "1rem" }}>
+          <p className="muted">
+            Start with the original WhatsApp text, optionally improve it with AI, then edit the final caption.
+          </p>
+          <label>
+            Original WhatsApp text (not editable)
+            <textarea value={submission.brief} readOnly />
+          </label>
+          <form className="grid">
             <input type="hidden" name="id" value={submission.id} />
             <label>
               Final caption
@@ -187,15 +151,17 @@ export function SubmissionReviewTabs({
             </label>
             <div className="actions">
               <button
-                type="button"
+                formAction={improveCaption}
                 className="secondary"
-                onClick={() => setFinalCaption(aiCaption || userCaption)}
               >
-                Use best available text
+                Improve with AI
               </button>
-              <button type="submit">Save final caption</button>
+              <button formAction={saveCaption}>Save final caption</button>
             </div>
           </form>
+          {submission.ai_error ? (
+            <p className="notice">AI drafting error: {submission.ai_error}</p>
+          ) : null}
         </section>
       ) : null}
 

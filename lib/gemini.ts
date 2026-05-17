@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { z } from "zod";
-import type { AiSettings, StyleExample, Submission } from "@/lib/types";
+import type { AiSettings, Submission } from "@/lib/types";
 
 export const draftResponseSchema = z.object({
   caption: z.string().min(1),
@@ -13,7 +13,6 @@ export type DraftResponse = z.infer<typeof draftResponseSchema>;
 
 export async function generateCaptionDraft(opts: {
   submission: Submission;
-  styleExamples: StyleExample[];
   aiSettings: AiSettings | null;
   reviewerNotes?: string;
 }) {
@@ -45,23 +44,10 @@ export async function generateCaptionDraft(opts: {
 
 function buildPrompt(opts: {
   submission: Submission;
-  styleExamples: StyleExample[];
   aiSettings: AiSettings | null;
   reviewerNotes?: string;
 }) {
-  const examples = opts.styleExamples
-    .map((example, index) => {
-      return [
-        `Example ${index + 1}${example.label ? ` (${example.label})` : ""}:`,
-        example.post_text,
-        example.notes ? `Notes: ${example.notes}` : ""
-      ]
-        .filter(Boolean)
-        .join("\n");
-    })
-    .join("\n\n");
-
-  return `You draft Instagram captions for an organisation.
+  return `You improve short WhatsApp submission text into Instagram captions for an organisation.
 
 Return JSON only with this shape:
 {
@@ -72,15 +58,18 @@ Return JSON only with this shape:
 }
 
 Rules:
-- Do not invent scores, player names, dates, locations, sponsors, or outcomes.
-- Only use facts present in the submitted brief.
-- Match the organisation voice from previous examples.
-- Make the caption editable and reviewer-friendly.
+- Rewrite the submitted WhatsApp text into a short Instagram caption.
+- Use Australian spelling.
+- Use 1-3 emojis if appropriate.
+- Do not invent names, dates, scores, locations, sponsors, awards, events, or outcomes.
+- Only use facts present in the submitted WhatsApp text.
+- Keep it suitable for Instagram and easy for a reviewer to edit.
+- If default hashtags are provided, include only the most relevant ones.
 
-Submitted brief:
+Submitted WhatsApp text:
 ${opts.submission.brief}
 
-Reviewer notes:
+Reviewer notes or current caption:
 ${opts.reviewerNotes || "None"}
 
 Organisation voice notes:
@@ -93,8 +82,5 @@ Banned phrases:
 ${opts.aiSettings?.banned_phrases || "None"}
 
 Call-to-action notes:
-${opts.aiSettings?.call_to_action_notes || "None"}
-
-Previous post examples:
-${examples || "No examples saved yet."}`;
+${opts.aiSettings?.call_to_action_notes || "None"}`;
 }
